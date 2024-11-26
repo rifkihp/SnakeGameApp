@@ -1,5 +1,6 @@
 package io.hvk.snakegamecompose.ui.screens
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,11 +14,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -58,6 +62,8 @@ fun GameScreen(
                 .getInt("high_score_${gameLevel.name}", 0)
         )
     }
+    var remainingTime by remember { mutableIntStateOf(if (gameLevel == GameLevel.TIME_ATTACK) 30 else 0) }
+    var previousScore by remember { mutableIntStateOf(0) }
 
     // Update high score when game ends
     fun updateHighScore() {
@@ -97,6 +103,27 @@ fun GameScreen(
         }
     }
 
+    // Timer for Speed Race mode
+    LaunchedEffect(isGameStarted, gameLevel) {
+        if (isGameStarted && gameLevel == GameLevel.TIME_ATTACK) {
+            while (remainingTime > 0 && !gameState.isGameOver) {
+                delay(1000L)
+                remainingTime--
+                if (remainingTime <= 0) {
+                    gameState = gameState.copy(isGameOver = true)
+                }
+            }
+        }
+    }
+
+    // Check for food eaten and add time
+    LaunchedEffect(gameState.score) {
+        if (gameLevel == GameLevel.TIME_ATTACK && gameState.score > previousScore) {
+            remainingTime += 3 // Add 3 seconds for each food eaten
+            previousScore = gameState.score
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -131,7 +158,7 @@ fun GameScreen(
                         .background(GameColors.DarkGreen, RoundedCornerShape(8.dp))
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
                         tint = GameColors.NeonGreen
                     )
@@ -165,6 +192,43 @@ fun GameScreen(
 
                 // Placeholder for symmetry
                 Box(modifier = Modifier.width(48.dp))
+            }
+
+            // Add Timer for Speed Race mode
+            if (gameLevel == GameLevel.TIME_ATTACK) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Time",
+                            color = GameColors.NeonGreenAlpha70,
+                            fontSize = 16.sp
+                        )
+                        Text(
+                            text = "$remainingTime s",
+                            color = GameColors.NeonGreen,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    LinearProgressIndicator(
+                        progress = remainingTime / 30f,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(4.dp),
+                        color = GameColors.NeonGreen,
+                        trackColor = GameColors.DarkGreen,
+                        strokeCap = StrokeCap.Round
+                    )
+                }
             }
 
             // Game Board
@@ -302,6 +366,10 @@ fun GameScreen(
                             onClick = {
                                 shouldRestartGame = true
                                 isGamePaused = false
+                                if (gameLevel == GameLevel.TIME_ATTACK) {
+                                    remainingTime = 30
+                                    previousScore = 0
+                                }
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = GameColors.WhiteAlpha10
