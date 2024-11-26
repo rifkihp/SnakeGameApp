@@ -64,6 +64,7 @@ fun GameScreen(
     }
     var remainingTime by remember { mutableIntStateOf(if (gameLevel == GameLevel.TIME_ATTACK) 30 else 0) }
     var previousScore by remember { mutableIntStateOf(0) }
+    var gameSpeed by remember { mutableStateOf(200L) } // Initial speed in milliseconds
 
     // Update high score when game ends
     fun updateHighScore() {
@@ -96,7 +97,7 @@ fun GameScreen(
     // Game loop
     LaunchedEffect(isGameStarted) {
         while (isGameStarted) {
-            delay(200L)
+            delay(gameSpeed) // Use dynamic speed instead of fixed 200L
             if (!isGamePaused && !gameState.isGameOver) {
                 gameState = gameState.move()
             }
@@ -120,6 +121,15 @@ fun GameScreen(
     LaunchedEffect(gameState.score) {
         if (gameLevel == GameLevel.TIME_ATTACK && gameState.score > previousScore) {
             remainingTime += 3 // Add 3 seconds for each food eaten
+            previousScore = gameState.score
+        }
+    }
+
+    // Add speed increase when food is eaten for Speed Race mode
+    LaunchedEffect(gameState.score) {
+        if (gameLevel == GameLevel.SPEED_RACE && gameState.score > previousScore) {
+            // Decrease delay time (increase speed) by 10ms for each food eaten
+            gameSpeed = maxOf(50L, gameSpeed - 10L) // Minimum speed of 50ms
             previousScore = gameState.score
         }
     }
@@ -231,6 +241,39 @@ fun GameScreen(
                 }
             }
 
+            // Add current speed display for Speed Race mode
+            if (gameLevel == GameLevel.SPEED_RACE) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Speed",
+                        color = GameColors.NeonGreenAlpha70,
+                        fontSize = 16.sp
+                    )
+                    Text(
+                        text = "${(1000L/gameSpeed).toInt()}x",
+                        color = GameColors.NeonGreen,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                LinearProgressIndicator(
+                    progress = (200f - gameSpeed) / 150f, // Progress based on speed increase
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp),
+                    color = GameColors.NeonGreen,
+                    trackColor = GameColors.DarkGreen,
+                    strokeCap = StrokeCap.Round
+                )
+            }
+
             // Game Board
             Box(
                 modifier = Modifier
@@ -339,6 +382,16 @@ fun GameScreen(
                             fontWeight = FontWeight.Bold
                         )
 
+                        if (gameLevel == GameLevel.SPEED_RACE) {
+                            Text(
+                                text = "Final Speed: ${(1000L/gameSpeed).toInt()}x",
+                                color = GameColors.NeonGreen,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
+
                         if (gameState.score >= highScore) {
                             Text(
                                 text = "New High Score!",
@@ -366,6 +419,7 @@ fun GameScreen(
                             onClick = {
                                 shouldRestartGame = true
                                 isGamePaused = false
+                                gameSpeed = 200L // Reset speed to initial value
                                 if (gameLevel == GameLevel.TIME_ATTACK) {
                                     remainingTime = 30
                                     previousScore = 0
