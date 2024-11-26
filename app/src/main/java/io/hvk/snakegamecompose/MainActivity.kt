@@ -30,6 +30,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+
+enum class Screen {
+    MAIN, GAME
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,14 +53,19 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SnakeGameComposeTheme {
-                MainScreen()
+                var currentScreen by remember { mutableStateOf(Screen.MAIN) }
+                
+                when (currentScreen) {
+                    Screen.MAIN -> MainScreen(onPlayClick = { currentScreen = Screen.GAME })
+                    Screen.GAME -> GameScreen(onBackToMenu = { currentScreen = Screen.MAIN })
+                }
             }
         }
     }
 }
 
 @Composable
-fun MainScreen() {
+fun MainScreen(onPlayClick: () -> Unit) {
     val context = LocalContext.current
     var showResetDialog by remember { mutableStateOf(false) }
     
@@ -116,7 +137,7 @@ fun MainScreen() {
             
             MenuButton(
                 text = "Play Game",
-                onClick = { /* TODO: Start game */ }
+                onClick = onPlayClick
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -129,10 +150,10 @@ fun MainScreen() {
             Spacer(modifier = Modifier.height(16.dp))
             
             MenuButton(
-                text = "Reset Progress",
-                onClick = { showResetDialog = true }
+                text = "Reset Progress", onClick = { showResetDialog = true }
             )
         }
+
 
         // Reset Progress Dialog
         if (showResetDialog) {
@@ -246,6 +267,157 @@ fun MenuButton(
                 color = Color.White,
                 fontWeight = FontWeight.Bold
             )
+        }
+    }
+}
+
+@Composable
+fun GameScreen(onBackToMenu: () -> Unit) {
+    var direction by remember { mutableStateOf(Direction.RIGHT) }
+    
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF1B5E20))
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Game Board
+            GameBoard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(16.dp)
+            )
+            
+            // Game Controls
+            GamePad(
+                onDirectionChange = { newDirection -> direction = newDirection },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun GameBoard(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .aspectRatio(1f)
+            .background(
+                Color(0xFF2E7D32),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(8.dp)
+    ) {
+        // TODO: Implement snake game logic
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            // Draw grid lines
+            val cellSize = size.width / 20
+            for (i in 0..20) {
+                drawLine(
+                    color = Color.White.copy(alpha = 0.2f),
+                    start = Offset(i * cellSize, 0f),
+                    end = Offset(i * cellSize, size.height),
+                    strokeWidth = 1f
+                )
+                drawLine(
+                    color = Color.White.copy(alpha = 0.2f),
+                    start = Offset(0f, i * cellSize),
+                    end = Offset(size.width, i * cellSize),
+                    strokeWidth = 1f
+                )
+            }
+        }
+    }
+}
+
+enum class Direction {
+    UP, DOWN, LEFT, RIGHT
+}
+
+@Composable
+fun GamePad(
+    onDirectionChange: (Direction) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(modifier = modifier) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Up button
+            IconButton(
+                onClick = { onDirectionChange(Direction.UP) },
+                modifier = Modifier
+                    .shadow(4.dp, CircleShape)
+                    .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                    .size(64.dp)
+            ) {
+                Icon(
+                    Icons.Default.KeyboardArrowUp,
+                    contentDescription = "Up",
+                    tint = Color.White,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+            
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(32.dp),
+                modifier = Modifier.padding(vertical = 8.dp)
+            ) {
+                // Left button
+                IconButton(
+                    onClick = { onDirectionChange(Direction.LEFT) },
+                    modifier = Modifier
+                        .shadow(4.dp, CircleShape)
+                        .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                        .size(64.dp)
+                ) {
+                    Icon(
+                        Icons.Default.KeyboardArrowLeft,
+                        contentDescription = "Left",
+                        tint = Color.White,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+                
+                // Right button
+                IconButton(
+                    onClick = { onDirectionChange(Direction.RIGHT) },
+                    modifier = Modifier
+                        .shadow(4.dp, CircleShape)
+                        .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                        .size(64.dp)
+                ) {
+                    Icon(
+                        Icons.Default.KeyboardArrowRight,
+                        contentDescription = "Right",
+                        tint = Color.White,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+            }
+            
+            // Down button
+            IconButton(
+                onClick = { onDirectionChange(Direction.DOWN) },
+                modifier = Modifier
+                    .shadow(4.dp, CircleShape)
+                    .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                    .size(64.dp)
+            ) {
+                Icon(
+                    Icons.Default.KeyboardArrowDown,
+                    contentDescription = "Down",
+                    tint = Color.White,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
         }
     }
 }
