@@ -1,43 +1,71 @@
 package io.hvk.snakegamecompose.ui.screens
 
 import android.content.Context
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextAlign.Companion
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.animation.core.*
-import androidx.compose.animation.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import io.hvk.snakegamecompose.R
 import io.hvk.snakegamecompose.ui.components.AnimatedBackground
 import io.hvk.snakegamecompose.ui.components.MenuButton
 import io.hvk.snakegamecompose.ui.game.model.GameLevel
+import io.hvk.snakegamecompose.ui.theme.GameColors.NeonGreen
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun MainScreen(onPlayClick: () -> Unit) {
     val context = LocalContext.current
     var showResetDialog by remember { mutableStateOf(false) }
-    var currentLevelIndex by remember { mutableStateOf(0) }
-    val levels = GameLevel.values()
-    
+    var currentLevelIndex by remember { mutableIntStateOf(0) }
+    val levels = GameLevel.entries.toTypedArray()
+
     // Animation for level transition
     val slideAnim = rememberInfiniteTransition(label = "")
     val scale by slideAnim.animateFloat(
@@ -52,18 +80,10 @@ fun MainScreen(onPlayClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF1B5E20),
-                        Color(0xFF2E7D32),
-                        Color(0xFF388E3C)
-                    )
-                )
-            )
+            .background(Color.Black)
     ) {
         AnimatedBackground()
-        
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -71,17 +91,17 @@ fun MainScreen(onPlayClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Logo section remains the same...
+            // Logo container with neon effect
             Box(
                 modifier = Modifier
                     .scale(scale)
                     .shadow(
-                        elevation = 8.dp,
-                        shape = RoundedCornerShape(16.dp),
-                        spotColor = Color.Black.copy(alpha = 0.3f)
+                        elevation = 16.dp,
+                        spotColor = Color(0xFF00FF00).copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(16.dp)
                     )
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color.White.copy(alpha = 0.1f))
+                    .background(Color(0xFF002000))
                     .padding(16.dp)
             ) {
                 Image(
@@ -90,23 +110,24 @@ fun MainScreen(onPlayClick: () -> Unit) {
                     modifier = Modifier.size(120.dp)
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
+            // Title with neon effect
             Text(
                 text = "Snake Game",
-                fontSize = 40.sp,
+                fontSize = 55.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White,
+                color = Color(0xFF00FF00),
                 modifier = Modifier.shadow(
-                    elevation = 4.dp,
-                    spotColor = Color.Black.copy(alpha = 0.3f)
+                    elevation = 20.dp,
+                    spotColor = Color(0xFF00FF00).copy(alpha = 0.5f)
                 )
             )
-            
+
             Spacer(modifier = Modifier.height(48.dp))
-            
-            // Level Selector
+
+            // Level Selector with neon theme
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -119,13 +140,13 @@ fun MainScreen(onPlayClick: () -> Unit) {
                         currentLevelIndex = (currentLevelIndex - 1 + levels.size) % levels.size
                     },
                     modifier = Modifier
-                        .shadow(4.dp, CircleShape)
-                        .background(Color.White.copy(alpha = 0.1f), CircleShape)
+                        .shadow(8.dp, CircleShape, spotColor = Color(0xFF00FF00).copy(alpha = 0.5f))
+                        .background(Color(0xFF002000), CircleShape)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.KeyboardArrowLeft,
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                         contentDescription = "Previous Level",
-                        tint = Color.White
+                        tint = Color(0xFF00FF00)
                     )
                 }
 
@@ -144,25 +165,27 @@ fun MainScreen(onPlayClick: () -> Unit) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .width(200.dp)
-                            .background(
-                                Color.White.copy(alpha = 0.1f),
-                                RoundedCornerShape(8.dp)
+                            .size(200.dp, 150.dp)
+                            .shadow(
+                                8.dp,
+                                RoundedCornerShape(8.dp),
+                                spotColor = NeonGreen.copy(alpha = 0.3f)
                             )
+                            .background(Color(0xFF002000), RoundedCornerShape(8.dp))
                             .padding(16.dp)
                     ) {
                         Text(
                             text = levels[index].title,
-                            color = Color.White,
+                            color = Color(0xFF00FF00),
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = levels[index].description,
-                            color = Color.White.copy(alpha = 0.7f),
-                            fontSize = 14.sp,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            color = NeonGreen.copy(alpha = 0.7f),
+                            fontSize = 20.sp,
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
@@ -172,26 +195,26 @@ fun MainScreen(onPlayClick: () -> Unit) {
                         currentLevelIndex = (currentLevelIndex + 1) % levels.size
                     },
                     modifier = Modifier
-                        .shadow(4.dp, CircleShape)
-                        .background(Color.White.copy(alpha = 0.1f), CircleShape)
+                        .shadow(8.dp, CircleShape, spotColor = Color(0xFF00FF00).copy(alpha = 0.5f))
+                        .background(Color(0xFF002000), CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowRight,
                         contentDescription = "Next Level",
-                        tint = Color.White
+                        tint = Color(0xFF00FF00)
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             MenuButton(
                 text = "Play Game",
                 onClick = onPlayClick
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             MenuButton(
                 text = "Reset Progress",
                 onClick = { showResetDialog = true }

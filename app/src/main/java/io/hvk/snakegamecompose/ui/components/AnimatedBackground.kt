@@ -5,67 +5,73 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import io.hvk.snakegamecompose.ui.game.model.Point
+import androidx.compose.ui.graphics.drawscope.rotate
 import kotlinx.coroutines.delay
-import kotlin.random.Random
+import kotlin.math.cos
+import kotlin.math.sin
+import io.hvk.snakegamecompose.ui.theme.GameColors
 
 @Composable
 fun AnimatedBackground() {
-    var snakePoints by remember { mutableStateOf(generateInitialSnake()) }
-    var direction by remember { mutableStateOf(getRandomDirection()) }
+    var rotation by remember { mutableFloatStateOf(0f) }
     
     LaunchedEffect(Unit) {
         while (true) {
-            delay(200L) // Snake movement speed
-            snakePoints = moveSnake(snakePoints, direction)
-            
-            // Randomly change direction occasionally
-            if (Random.nextFloat() < 0.1f) { // 10% chance to change direction
-                direction = getRandomDirection()
-            }
+            delay(16L)
+            rotation = (rotation + 0.2f) % 360f
         }
     }
     
     Canvas(modifier = Modifier.fillMaxSize()) {
-        val cellSize = size.width / 30 // Smaller grid for background
-
-        // Draw snake
-        snakePoints.forEach { point ->
-            drawRect(
-                color = Color.White.copy(alpha = 0.1f),
-                topLeft = Offset(point.x * cellSize, point.y * cellSize),
-                size = Size(cellSize, cellSize)
+        val centerX = size.width / 2
+        val centerY = size.height / 2
+        val radius = minOf(size.width, size.height) * 0.4f
+        
+        rotate(rotation, Offset(centerX, centerY)) {
+            // Draw rotating neon circles
+            for (i in 0 until 4) {
+                val angle = (i * 90f) * (Math.PI / 180f)
+                val x = centerX + radius * cos(angle).toFloat()
+                val y = centerY + radius * sin(angle).toFloat()
+                
+                drawCircle(
+                    color = GameColors.NeonGreenAlpha30,
+                    radius = 20f,
+                    center = Offset(x, y)
+                )
+            }
+            
+            // Draw connecting lines
+            for (i in 0 until 4) {
+                val startAngle = (i * 90f) * (Math.PI / 180f)
+                val endAngle = ((i + 1) * 90f) * (Math.PI / 180f)
+                
+                val startX = centerX + radius * cos(startAngle).toFloat()
+                val startY = centerY + radius * sin(startAngle).toFloat()
+                val endX = centerX + radius * cos(endAngle).toFloat()
+                val endY = centerY + radius * sin(endAngle).toFloat()
+                
+                drawLine(
+                    color = GameColors.NeonGreen,
+                    start = Offset(startX, startY),
+                    end = Offset(endX, endY),
+                    strokeWidth = 4f
+                )
+            }
+        }
+        
+        // Draw static outer glow
+        for (i in 0 until 360 step 45) {
+            val angle = i * (Math.PI / 180f)
+            val outerRadius = radius + 30f
+            val x = centerX + outerRadius * cos(angle).toFloat()
+            val y = centerY + outerRadius * sin(angle).toFloat()
+            
+            drawCircle(
+                color = GameColors.NeonGreenAlpha30,
+                radius = 40f,
+                center = Offset(x, y)
             )
         }
     }
-}
-
-private fun generateInitialSnake(): List<Point> {
-    val startX = Random.nextInt(5, 25)
-    val startY = Random.nextInt(5, 25)
-    return List(8) { index -> Point(startX, startY + index) }
-}
-
-private fun getRandomDirection(): Point {
-    return when (Random.nextInt(4)) {
-        0 -> Point(0, -1) // Up
-        1 -> Point(0, 1)  // Down
-        2 -> Point(-1, 0) // Left
-        else -> Point(1, 0) // Right
-    }
-}
-
-private fun moveSnake(snake: List<Point>, direction: Point): List<Point> {
-    val head = snake.first()
-    var newHead = head + direction
-    
-    // Wrap around screen edges
-    newHead = Point(
-        (newHead.x + 30) % 30,
-        (newHead.y + 30) % 30
-    )
-    
-    return listOf(newHead) + snake.dropLast(1)
 } 

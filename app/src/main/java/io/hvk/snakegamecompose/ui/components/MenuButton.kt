@@ -24,9 +24,9 @@ fun MenuButton(
     Box(
         modifier = Modifier
             .shadow(
-                elevation = if (isPressed) 4.dp else 8.dp,
+                elevation = if (isPressed) 8.dp else 16.dp,
                 shape = RoundedCornerShape(28.dp),
-                spotColor = Color.Black.copy(alpha = 0.3f)
+                spotColor = Color(0xFF00FF00).copy(alpha = 0.5f)
             )
     ) {
         Button(
@@ -35,15 +35,15 @@ fun MenuButton(
                 .width(250.dp)
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White.copy(alpha = 0.2f)
+                containerColor = Color(0xFF002000)
             ),
             shape = RoundedCornerShape(28.dp),
             border = ButtonDefaults.outlinedButtonBorder.copy(
                 width = 2.dp,
-                brush = Brush.verticalGradient(
+                brush = Brush.linearGradient(
                     listOf(
-                        Color.White.copy(alpha = 0.5f),
-                        Color.White.copy(alpha = 0.2f)
+                        Color(0xFF00FF00).copy(alpha = 0.7f),
+                        Color(0xFF00FF00).copy(alpha = 0.3f)
                     )
                 )
             ),
@@ -63,7 +63,7 @@ fun MenuButton(
             Text(
                 text = text,
                 fontSize = 20.sp,
-                color = Color.White,
+                color = Color(0xFF00FF00),
                 fontWeight = FontWeight.Bold
             )
         }
