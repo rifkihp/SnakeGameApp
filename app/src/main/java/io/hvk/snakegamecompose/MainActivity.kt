@@ -9,6 +9,7 @@ import io.hvk.snakegamecompose.ui.navigation.Screen
 import io.hvk.snakegamecompose.ui.screens.GameScreen
 import io.hvk.snakegamecompose.ui.screens.MainScreen
 import androidx.compose.runtime.*
+import io.hvk.snakegamecompose.ui.game.model.GameLevel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,10 +18,19 @@ class MainActivity : ComponentActivity() {
         setContent {
             SnakeGameComposeTheme {
                 var currentScreen by remember { mutableStateOf(Screen.MAIN) }
+                var selectedGameLevel by remember { mutableStateOf(GameLevel.CLASSIC) }
                 
                 when (currentScreen) {
-                    Screen.MAIN -> MainScreen(onPlayClick = { currentScreen = Screen.GAME })
-                    Screen.GAME -> GameScreen(onBackToMenu = { currentScreen = Screen.MAIN })
+                    Screen.MAIN -> MainScreen(
+                        onPlayClick = { gameLevel ->
+                            selectedGameLevel = gameLevel
+                            currentScreen = Screen.GAME
+                        }
+                    )
+                    Screen.GAME -> GameScreen(
+                        gameLevel = selectedGameLevel,
+                        onBackToMenu = { currentScreen = Screen.MAIN }
+                    )
                 }
             }
         }

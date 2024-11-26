@@ -31,9 +31,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -57,10 +63,10 @@ import io.hvk.snakegamecompose.R
 import io.hvk.snakegamecompose.ui.components.AnimatedBackground
 import io.hvk.snakegamecompose.ui.components.MenuButton
 import io.hvk.snakegamecompose.ui.game.model.GameLevel
-import io.hvk.snakegamecompose.ui.theme.GameColors.NeonGreen
+import io.hvk.snakegamecompose.ui.theme.GameColors
 
 @Composable
-fun MainScreen(onPlayClick: () -> Unit) {
+fun MainScreen(onPlayClick: (GameLevel) -> Unit) {
     val context = LocalContext.current
     var showResetDialog by remember { mutableStateOf(false) }
     var currentLevelIndex by remember { mutableIntStateOf(0) }
@@ -80,7 +86,7 @@ fun MainScreen(onPlayClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(GameColors.BackgroundDark)
     ) {
         AnimatedBackground()
 
@@ -169,7 +175,7 @@ fun MainScreen(onPlayClick: () -> Unit) {
                             .shadow(
                                 8.dp,
                                 RoundedCornerShape(8.dp),
-                                spotColor = NeonGreen.copy(alpha = 0.3f)
+                                spotColor = GameColors.NeonGreen.copy(alpha = 0.3f)
                             )
                             .background(Color(0xFF002000), RoundedCornerShape(8.dp))
                             .padding(16.dp)
@@ -183,7 +189,7 @@ fun MainScreen(onPlayClick: () -> Unit) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = levels[index].description,
-                            color = NeonGreen.copy(alpha = 0.7f),
+                            color = GameColors.NeonGreen.copy(alpha = 0.7f),
                             fontSize = 20.sp,
                             textAlign = TextAlign.Center
                         )
@@ -210,7 +216,7 @@ fun MainScreen(onPlayClick: () -> Unit) {
 
             MenuButton(
                 text = "Play Game",
-                onClick = onPlayClick
+                onClick = { onPlayClick(levels[currentLevelIndex]) }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -219,13 +225,108 @@ fun MainScreen(onPlayClick: () -> Unit) {
                 text = "Reset Progress",
                 onClick = { showResetDialog = true }
             )
+
+            // Add high scores display for each mode
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                levels.forEach { level ->
+                    val highScore = remember {
+                        context.getSharedPreferences("snake_game_prefs", 0)
+                            .getInt("high_score_${level.name}", 0)
+                    }
+                    if (highScore > 0) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = level.title,
+                                color = GameColors.NeonGreenAlpha70,
+                                fontSize = 16.sp
+                            )
+                            Text(
+                                text = "Best: $highScore",
+                                color = GameColors.NeonGreenAlpha70,
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
+                }
+            }
         }
 
-        // Reset Progress Dialog remains the same...
+        // Reset Progress Dialog
+        if (showResetDialog) {
+            AlertDialog(
+                onDismissRequest = { showResetDialog = false },
+                title = {
+                    Text(
+                        "Reset Progress",
+                        color = GameColors.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 24.sp
+                    )
+                },
+                text = {
+                    Text(
+                        "Are you sure you want to reset all progress? This action cannot be undone.",
+                        color = GameColors.WhiteAlpha80,
+                        fontSize = 16.sp
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            resetGameProgress(context)
+                            showResetDialog = false
+                        },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = GameColors.NeonGreen
+                        )
+                    ) {
+                        Text(
+                            "Reset",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showResetDialog = false },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = GameColors.WhiteAlpha70
+                        )
+                    ) {
+                        Text(
+                            "Cancel",
+                            fontSize = 16.sp
+                        )
+                    }
+                },
+                containerColor = GameColors.DarkGreen,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .shadow(
+                        elevation = 16.dp,
+                        spotColor = GameColors.NeonGreenAlpha30,
+                        shape = RoundedCornerShape(16.dp)
+                    )
+            )
+        }
     }
 }
 
 private fun resetGameProgress(context: Context) {
     val sharedPrefs = context.getSharedPreferences("snake_game_prefs", Context.MODE_PRIVATE)
-    sharedPrefs.edit().clear().apply()
+    val editor = sharedPrefs.edit()
+    GameLevel.entries.forEach { level ->
+        editor.remove("high_score_${level.name}")
+    }
+    editor.apply()
 } 

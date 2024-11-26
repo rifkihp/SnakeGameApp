@@ -1,18 +1,34 @@
 package io.hvk.snakegamecompose.ui.screens
 
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -20,21 +36,26 @@ import androidx.compose.ui.unit.sp
 import io.hvk.snakegamecompose.ui.game.Direction
 import io.hvk.snakegamecompose.ui.game.GameBoard
 import io.hvk.snakegamecompose.ui.game.GamePad
+import io.hvk.snakegamecompose.ui.game.model.GameLevel
 import io.hvk.snakegamecompose.ui.game.model.GameState
+import io.hvk.snakegamecompose.ui.theme.GameColors
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
-fun GameScreen(onBackToMenu: () -> Unit) {
+fun GameScreen(
+    gameLevel: GameLevel,
+    onBackToMenu: () -> Unit
+) {
     val context = LocalContext.current
     var gameState by remember { mutableStateOf(GameState()) }
     var isGamePaused by remember { mutableStateOf(false) }
-    var countdown by remember { mutableStateOf(3) }
+    var countdown by remember { mutableIntStateOf(3) }
     var isGameStarted by remember { mutableStateOf(false) }
-    var highScore by remember { 
-        mutableStateOf(
+    var shouldRestartGame by remember { mutableStateOf(true) }
+    var highScore by remember {
+        mutableIntStateOf(
             context.getSharedPreferences("snake_game_prefs", 0)
-                .getInt("high_score", 0)
+                .getInt("high_score_${gameLevel.name}", 0)
         )
     }
 
@@ -44,25 +65,33 @@ fun GameScreen(onBackToMenu: () -> Unit) {
             highScore = gameState.score
             context.getSharedPreferences("snake_game_prefs", 0)
                 .edit()
-                .putInt("high_score", highScore)
+                .putInt("high_score_${gameLevel.name}", highScore)
                 .apply()
         }
     }
 
-    // Countdown effect
-    LaunchedEffect(Unit) {
-        while (countdown > 0) {
-            delay(1000L)
-            countdown--
+    // Game initialization and countdown
+    LaunchedEffect(shouldRestartGame) {
+        if (shouldRestartGame) {
+            countdown = 3
+            isGameStarted = false
+            gameState = GameState()
+
+            // Countdown phase
+            while (countdown > 0) {
+                delay(1000L)
+                countdown--
+            }
+            isGameStarted = true
+            shouldRestartGame = false
         }
-        isGameStarted = true
     }
-    
+
     // Game loop
     LaunchedEffect(isGameStarted) {
-        while (true) {
-            delay(200L) // Control game speed
-            if (isGameStarted && !isGamePaused && !gameState.isGameOver) {
+        while (isGameStarted) {
+            delay(200L)
+            if (!isGamePaused && !gameState.isGameOver) {
                 gameState = gameState.move()
             }
         }
@@ -71,13 +100,13 @@ fun GameScreen(onBackToMenu: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF1B5E20))
+            .background(GameColors.BackgroundDark)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Top Bar with Back Button and Scores
+            // Top Bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -85,48 +114,59 @@ fun GameScreen(onBackToMenu: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Back Button
                 IconButton(
                     onClick = {
                         if (isGameStarted && !gameState.isGameOver) {
                             isGamePaused = true
-                            // Show confirmation dialog
-                            // (We'll add this later)
                         } else {
                             onBackToMenu()
                         }
-                    }
+                    },
+                    modifier = Modifier
+                        .shadow(
+                            8.dp,
+                            RoundedCornerShape(8.dp),
+                            spotColor = GameColors.NeonGreenAlpha30
+                        )
+                        .background(GameColors.DarkGreen, RoundedCornerShape(8.dp))
                 ) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back",
-                        tint = Color.White
+                        tint = GameColors.NeonGreen
                     )
                 }
 
-                // Scores
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .shadow(
+                            8.dp,
+                            RoundedCornerShape(8.dp),
+                            spotColor = GameColors.NeonGreenAlpha30
+                        )
+                        .background(GameColors.DarkGreen, RoundedCornerShape(8.dp))
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Text(
                         text = "Score: ${gameState.score}",
-                        color = Color.White,
+                        color = GameColors.NeonGreen,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = "Best: $highScore",
-                        color = Color.White.copy(alpha = 0.8f),
+                        color = GameColors.NeonGreenAlpha70,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
 
-                // Placeholder to maintain centering
+                // Placeholder for symmetry
                 Box(modifier = Modifier.width(48.dp))
             }
-            
+
             // Game Board
             Box(
                 modifier = Modifier
@@ -138,25 +178,29 @@ fun GameScreen(onBackToMenu: () -> Unit) {
                     gameState = gameState,
                     modifier = Modifier.fillMaxSize()
                 )
-                
+
                 // Countdown Overlay
                 if (!isGameStarted) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.7f)),
+                            .background(GameColors.BlackAlpha70),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = countdown.toString(),
-                            color = Color.White,
+                            color = GameColors.NeonGreen,
                             fontSize = 72.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.shadow(
+                                elevation = 20.dp,
+                                spotColor = GameColors.NeonGreenAlpha50
+                            )
                         )
                     }
                 }
             }
-            
+
             // Game Controls
             GamePad(
                 onDirectionChange = { newDirection ->
@@ -183,69 +227,58 @@ fun GameScreen(onBackToMenu: () -> Unit) {
             LaunchedEffect(Unit) {
                 updateHighScore()
             }
-            
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.8f)),
+                    .background(GameColors.BlackAlpha80),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
                     modifier = Modifier
                         .padding(32.dp)
                         .shadow(
-                            elevation = 8.dp,
+                            elevation = 16.dp,
                             shape = RoundedCornerShape(16.dp),
-                            spotColor = Color.Black.copy(alpha = 0.3f)
+                            spotColor = GameColors.NeonGreenAlpha50
                         )
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color(0xFF388E3C),
-                                    Color(0xFF1B5E20)
-                                )
-                            ),
-                            shape = RoundedCornerShape(16.dp)
-                        )
+                        .background(GameColors.DarkGreen, RoundedCornerShape(16.dp))
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Game Over Text with glow effect
                     Text(
                         text = "GAME OVER",
-                        color = Color.White,
+                        color = GameColors.NeonGreen,
                         fontSize = 40.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .shadow(
-                                elevation = 8.dp,
-                                spotColor = Color.Red.copy(alpha = 0.5f)
-                            )
+                        modifier = Modifier.shadow(
+                            elevation = 16.dp,
+                            spotColor = GameColors.NeonGreenAlpha50
+                        )
                     )
-                    
+
                     Spacer(modifier = Modifier.height(24.dp))
-                    
-                    // Score display
+
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .background(
-                                Color.White.copy(alpha = 0.1f),
+                                GameColors.WhiteAlpha10,
                                 RoundedCornerShape(8.dp)
                             )
                             .padding(16.dp)
                     ) {
                         Text(
                             text = "Score: ${gameState.score}",
-                            color = Color.White,
+                            color = GameColors.NeonGreen,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold
                         )
-                        
+
                         if (gameState.score >= highScore) {
                             Text(
                                 text = "New High Score!",
-                                color = Color.Yellow,
+                                color = GameColors.TextHighlight,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(top = 8.dp)
@@ -253,53 +286,50 @@ fun GameScreen(onBackToMenu: () -> Unit) {
                         } else {
                             Text(
                                 text = "Best: $highScore",
-                                color = Color.White.copy(alpha = 0.8f),
+                                color = GameColors.NeonGreenAlpha70,
                                 fontSize = 20.sp,
                                 modifier = Modifier.padding(top = 8.dp)
                             )
                         }
                     }
-                    
+
                     Spacer(modifier = Modifier.height(32.dp))
-                    
-                    // Buttons
+
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Button(
-                            onClick = { 
-                                gameState = GameState()
-                                countdown = 3
-                                isGameStarted = false
+                            onClick = {
+                                shouldRestartGame = true
                                 isGamePaused = false
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White.copy(alpha = 0.2f)
+                                containerColor = GameColors.WhiteAlpha10
                             ),
                             modifier = Modifier
-                                .shadow(4.dp, RoundedCornerShape(24.dp))
+                                .shadow(8.dp, RoundedCornerShape(24.dp))
                                 .height(48.dp)
                         ) {
                             Text(
                                 text = "Try Again",
-                                color = Color.White,
+                                color = GameColors.NeonGreen,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
-                        
+
                         Button(
                             onClick = onBackToMenu,
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White.copy(alpha = 0.2f)
+                                containerColor = GameColors.WhiteAlpha10
                             ),
                             modifier = Modifier
-                                .shadow(4.dp, RoundedCornerShape(24.dp))
+                                .shadow(8.dp, RoundedCornerShape(24.dp))
                                 .height(48.dp)
                         ) {
                             Text(
                                 text = "Main Menu",
-                                color = Color.White,
+                                color = GameColors.NeonGreen,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -311,23 +341,77 @@ fun GameScreen(onBackToMenu: () -> Unit) {
 
         // Pause Dialog
         if (isGamePaused && !gameState.isGameOver) {
-            AlertDialog(
-                onDismissRequest = { isGamePaused = false },
-                title = { Text("Pause", color = Color.White) },
-                text = { Text("Do you want to quit the game?", color = Color.White) },
-                confirmButton = {
-                    TextButton(onClick = onBackToMenu) {
-                        Text("Quit", color = Color.White)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(GameColors.BlackAlpha70),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    modifier = Modifier
+                        .shadow(
+                            elevation = 16.dp,
+                            shape = RoundedCornerShape(16.dp),
+                            spotColor = GameColors.NeonGreenAlpha50
+                        )
+                        .background(GameColors.DarkGreen, RoundedCornerShape(16.dp))
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "PAUSED",
+                        color = GameColors.NeonGreen,
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.shadow(
+                            elevation = 8.dp,
+                            spotColor = GameColors.NeonGreenAlpha50
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Do you want to quit?",
+                        color = GameColors.NeonGreenAlpha70,
+                        fontSize = 16.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Button(
+                            onClick = onBackToMenu,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = GameColors.WhiteAlpha10
+                            ),
+                            modifier = Modifier.shadow(4.dp, RoundedCornerShape(24.dp))
+                        ) {
+                            Text(
+                                text = "Quit",
+                                color = GameColors.NeonGreen,
+                                fontSize = 16.sp
+                            )
+                        }
+
+                        Button(
+                            onClick = { isGamePaused = false },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = GameColors.WhiteAlpha10
+                            ),
+                            modifier = Modifier.shadow(4.dp, RoundedCornerShape(24.dp))
+                        ) {
+                            Text(
+                                text = "Resume",
+                                color = GameColors.NeonGreen,
+                                fontSize = 16.sp
+                            )
+                        }
                     }
-                },
-                dismissButton = {
-                    TextButton(onClick = { isGamePaused = false }) {
-                        Text("Resume", color = Color.White)
-                    }
-                },
-                containerColor = Color(0xFF2E7D32),
-                shape = RoundedCornerShape(16.dp)
-            )
+                }
+            }
         }
     }
 } 
