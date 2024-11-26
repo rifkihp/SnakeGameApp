@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.animation.core.*
 import io.hvk.snakegamecompose.R
+import io.hvk.snakegamecompose.ui.components.AnimatedBackground
 import io.hvk.snakegamecompose.ui.components.MenuButton
 
 @Composable
@@ -52,6 +53,10 @@ fun MainScreen(onPlayClick: () -> Unit) {
                 )
             )
     ) {
+        // Animated Background
+        AnimatedBackground()
+        
+        // Main Content
         Column(
             modifier = Modifier
                 .fillMaxSize()

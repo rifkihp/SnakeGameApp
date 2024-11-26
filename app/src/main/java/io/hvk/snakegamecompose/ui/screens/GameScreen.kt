@@ -10,6 +10,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -182,35 +184,129 @@ fun GameScreen(onBackToMenu: () -> Unit) {
                 updateHighScore()
             }
             
-            AlertDialog(
-                onDismissRequest = { },
-                title = { Text("Game Over!", color = Color.White) },
-                text = { 
-                    Column {
-                        Text("Score: ${gameState.score}", color = Color.White)
-                        Text("Best: $highScore", color = Color.White)
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = onBackToMenu) {
-                        Text("Main Menu", color = Color.White)
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { 
-                            gameState = GameState()
-                            countdown = 3
-                            isGameStarted = false
-                            isGamePaused = false
-                        }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.8f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(32.dp)
+                        .shadow(
+                            elevation = 8.dp,
+                            shape = RoundedCornerShape(16.dp),
+                            spotColor = Color.Black.copy(alpha = 0.3f)
+                        )
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFF388E3C),
+                                    Color(0xFF1B5E20)
+                                )
+                            ),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Game Over Text with glow effect
+                    Text(
+                        text = "GAME OVER",
+                        color = Color.White,
+                        fontSize = 40.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .shadow(
+                                elevation = 8.dp,
+                                spotColor = Color.Red.copy(alpha = 0.5f)
+                            )
+                    )
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    // Score display
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .background(
+                                Color.White.copy(alpha = 0.1f),
+                                RoundedCornerShape(8.dp)
+                            )
+                            .padding(16.dp)
                     ) {
-                        Text("Try Again", color = Color.White)
+                        Text(
+                            text = "Score: ${gameState.score}",
+                            color = Color.White,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        
+                        if (gameState.score >= highScore) {
+                            Text(
+                                text = "New High Score!",
+                                color = Color.Yellow,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        } else {
+                            Text(
+                                text = "Best: $highScore",
+                                color = Color.White.copy(alpha = 0.8f),
+                                fontSize = 20.sp,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
                     }
-                },
-                containerColor = Color(0xFF2E7D32),
-                shape = RoundedCornerShape(16.dp)
-            )
+                    
+                    Spacer(modifier = Modifier.height(32.dp))
+                    
+                    // Buttons
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Button(
+                            onClick = { 
+                                gameState = GameState()
+                                countdown = 3
+                                isGameStarted = false
+                                isGamePaused = false
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White.copy(alpha = 0.2f)
+                            ),
+                            modifier = Modifier
+                                .shadow(4.dp, RoundedCornerShape(24.dp))
+                                .height(48.dp)
+                        ) {
+                            Text(
+                                text = "Try Again",
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        
+                        Button(
+                            onClick = onBackToMenu,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White.copy(alpha = 0.2f)
+                            ),
+                            modifier = Modifier
+                                .shadow(4.dp, RoundedCornerShape(24.dp))
+                                .height(48.dp)
+                        ) {
+                            Text(
+                                text = "Main Menu",
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         // Pause Dialog
