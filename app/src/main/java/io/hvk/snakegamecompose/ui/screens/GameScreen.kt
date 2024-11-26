@@ -1,6 +1,5 @@
 package io.hvk.snakegamecompose.ui.screens
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -256,7 +254,7 @@ fun GameScreen(
                         fontSize = 16.sp
                     )
                     Text(
-                        text = "${(1000L/gameSpeed).toInt()}x",
+                        text = "${(1000L / gameSpeed).toInt()}x",
                         color = GameColors.NeonGreen,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
@@ -264,13 +262,13 @@ fun GameScreen(
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 LinearProgressIndicator(
-                    progress = (200f - gameSpeed) / 150f, // Progress based on speed increase
+                    progress = { (200f - gameSpeed) / 150f },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(4.dp),
                     color = GameColors.NeonGreen,
                     trackColor = GameColors.DarkGreen,
-                    strokeCap = StrokeCap.Round
+                    strokeCap = StrokeCap.Round,
                 )
             }
 
@@ -325,7 +323,7 @@ fun GameScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .padding(36.dp)
             )
         }
 
@@ -384,7 +382,7 @@ fun GameScreen(
 
                         if (gameLevel == GameLevel.SPEED_RACE) {
                             Text(
-                                text = "Final Speed: ${(1000L/gameSpeed).toInt()}x",
+                                text = "Final Speed: ${(1000L / gameSpeed).toInt()}x",
                                 color = GameColors.NeonGreen,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
