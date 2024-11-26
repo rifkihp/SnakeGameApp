@@ -1,6 +1,7 @@
 package io.hvk.snakegamecompose.ui.screens
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -45,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,13 +66,25 @@ import io.hvk.snakegamecompose.ui.components.AnimatedBackground
 import io.hvk.snakegamecompose.ui.components.MenuButton
 import io.hvk.snakegamecompose.ui.game.model.GameLevel
 import io.hvk.snakegamecompose.ui.theme.GameColors
+import kotlinx.coroutines.launch
 
 @Composable
 fun MainScreen(onPlayClick: (GameLevel) -> Unit) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var showResetDialog by remember { mutableStateOf(false) }
     var currentLevelIndex by remember { mutableIntStateOf(0) }
     val levels = GameLevel.entries.toTypedArray()
+    
+    // Add state for high scores
+    var highScores by remember {
+        mutableStateOf(
+            levels.associate { level ->
+                level to context.getSharedPreferences("snake_game_prefs", 0)
+                    .getInt("high_score_${level.name}", 0)
+            }
+        )
+    }
 
     // Animation for level transition
     val slideAnim = rememberInfiniteTransition(label = "")
@@ -226,18 +240,14 @@ fun MainScreen(onPlayClick: (GameLevel) -> Unit) {
                 onClick = { showResetDialog = true }
             )
 
-            // Add high scores display for each mode
+            // Update high scores display
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
                 levels.forEach { level ->
-                    val highScore = remember {
-                        context.getSharedPreferences("snake_game_prefs", 0)
-                            .getInt("high_score_${level.name}", 0)
-                    }
-                    if (highScore > 0) {
+                    if (highScores[level]!! > 0) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -250,7 +260,7 @@ fun MainScreen(onPlayClick: (GameLevel) -> Unit) {
                                 fontSize = 16.sp
                             )
                             Text(
-                                text = "Best: $highScore",
+                                text = "Best: ${highScores[level]}",
                                 color = GameColors.NeonGreenAlpha70,
                                 fontSize = 16.sp
                             )
@@ -260,7 +270,7 @@ fun MainScreen(onPlayClick: (GameLevel) -> Unit) {
             }
         }
 
-        // Reset Progress Dialog
+        // Update Reset Progress Dialog
         if (showResetDialog) {
             AlertDialog(
                 onDismissRequest = { showResetDialog = false },
@@ -282,8 +292,18 @@ fun MainScreen(onPlayClick: (GameLevel) -> Unit) {
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            resetGameProgress(context)
-                            showResetDialog = false
+                            scope.launch {
+                                resetGameProgress(context)
+                                // Update high scores state
+                                highScores = levels.associate { level -> level to 0 }
+                                // Show toast message
+                                Toast.makeText(
+                                    context,
+                                    "All progress has been reset",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                showResetDialog = false
+                            }
                         },
                         colors = ButtonDefaults.textButtonColors(
                             contentColor = GameColors.NeonGreen
