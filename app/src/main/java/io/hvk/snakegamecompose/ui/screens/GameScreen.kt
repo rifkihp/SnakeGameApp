@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -62,7 +63,7 @@ fun GameScreen(
     }
     var remainingTime by remember { mutableIntStateOf(if (gameLevel == GameLevel.TIME_ATTACK) 30 else 0) }
     var previousScore by remember { mutableIntStateOf(0) }
-    var gameSpeed by remember { mutableStateOf(200L) } // Initial speed in milliseconds
+    var gameSpeed by remember { mutableLongStateOf(200L) } // Initial speed in milliseconds
 
     // Update high score when game ends
     fun updateHighScore() {

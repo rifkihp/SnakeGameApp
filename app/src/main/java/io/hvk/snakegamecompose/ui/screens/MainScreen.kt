@@ -79,8 +79,8 @@ fun MainScreen(onPlayClick: (GameLevel) -> Unit) {
     // Add state for high scores
     var highScores by remember {
         mutableStateOf(
-            levels.associate { level ->
-                level to context.getSharedPreferences("snake_game_prefs", 0)
+            levels.associateWith { level ->
+                context.getSharedPreferences("snake_game_prefs", 0)
                     .getInt("high_score_${level.name}", 0)
             }
         )
